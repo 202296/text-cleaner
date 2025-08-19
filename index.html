@@ -1,93 +1,328 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Text Cleaner</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Text Cleaner • with Saved Rules</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f4; }
-    textarea { width: 100%; height: 150px; margin-bottom: 10px; padding: 10px; font-size: 14px; }
-    button { margin-right: 10px; padding: 8px 12px; cursor: pointer; border: none; border-radius: 6px; }
-    .btn-clean { background: #007bff; color: white; }
-    .btn-copy { background: #28a745; color: white; }
-    .btn-add { background: #ff9800; color: white; }
-    ul { list-style: none; padding: 0; }
-    li { background: white; padding: 5px; margin: 3px 0; border-radius: 4px; }
+    :root{
+      --bg:#f8f9fb;--card:#ffffff;--text:#222;--muted:#6b7280;--primary:#0078D7;--primary-hover:#005fa3;--border:#e5e7eb;
+    }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;margin:0;background:var(--bg);color:var(--text)}
+    .wrap{max-width:920px;margin:32px auto;padding:0 16px}
+    h1{font-size:26px;margin:0 0 16px}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+    textarea{width:100%;min-height:140px;padding:12px;border:1px solid var(--border);border-radius:10px;font-size:15px;resize:vertical}
+    .btn{appearance:none;border:none;border-radius:10px;background:var(--primary);color:#fff;padding:10px 14px;font-size:14px;cursor:pointer}
+    .btn:hover{background:var(--primary-hover)}
+    .btn.secondary{background:#1118270d;color:#111827;border:1px solid var(--border)}
+    .btn.danger{background:#e11d48}
+    .btn.danger:hover{background:#be123c}
+    .stack{display:flex;gap:10px;flex-wrap:wrap}
+    label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
+    input[type="text"]{width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;font-size:14px}
+    .rules{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr auto;gap:8px}
+    .rule{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border:1px solid var(--border);border-radius:10px;padding:10px}
+    .muted{color:var(--muted);font-size:13px}
+    .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+    .small{font-size:12px}
   </style>
 </head>
 <body>
+  <div class="wrap">
+    <h1>Nettoyeur de texte</h1>
 
-  <h2>🧹 Text Cleaner</h2>
-  <textarea id="inputText" placeholder="Paste or write your text here..."></textarea>
-  <button class="btn-clean" onclick="cleanText()">Clean & Format</button>
-  <button class="btn-copy" onclick="copyText()">Copy Result</button>
+    <!-- INPUT / ACTIONS -->
+    <div class="card" style="margin-bottom:16px">
+      <label for="inputText">Transcription Brute</label>
+      <textarea id="inputText" placeholder="Collez la transcription brute ici..."></textarea>
+      <div class="toolbar">
+        <button class="btn" id="cleanBtn">Nettoyer</button>
+        <button class="btn secondary" id="clearBtn">Effacer</button>
+        <span class="muted">Supprime les points/virgules/deux points/points-virgules/les espaces supplémentaires et applique les règles personnalisées.</span>
+      </div>
+    </div>
 
-  <h3>✨ Result:</h3>
-  <textarea id="outputText" readonly></textarea>
+    <!-- OUTPUT -->
+    <div class="card" style="margin-bottom:16px">
+      <label for="outputText">Résultat</label>
+      <textarea id="outputText" readonly placeholder="Le texte nettoyé apparaîtra ici"></textarea>
+      <div class="toolbar">
+        <button class="btn" id="copyBtn">Copier</button>
+      </div>
+    </div>
 
-  <h3>➕ Add Special Capitalization Rule</h3>
-  <input type="text" id="originalWord" placeholder="Word to replace">
-  <input type="text" id="correctWord" placeholder="Correct version">
-  <button class="btn-add" onclick="addRule()">Add Rule</button>
+    <!-- RULES -->
+    <div class="card">
+      <h2 style="margin:0 0 12px">Règles personnalisées</h2>
+      <p class="muted" style="margin-top:0">
+        Ajoutez des phrases à gauche (telles qu'elles apparaîtront dans le texte) et la mise en forme souhaitée à droite. Les règles de correspondance sont <b>insensibles à la casse et aux accents</b> et sont enregistrées dans votre navigateur.
+      </p>
 
-  <h3>📌 Current Rules:</h3>
-  <ul id="rulesList"></ul>
+      <div class="row">
+        <div style="flex:1;min-width:260px">
+          <label for="findInput">Ajouter (par exemple Côte d'ivoire, onexbet)</label>
+          <input id="findInput" type="text" placeholder="Insertion" />
+        </div>
+        <div style="flex:1;min-width:260px">
+          <label for="replaceInput">Remplacer par (par exemple Côte d'Ivoire, OneXbet)</label>
+          <input id="replaceInput" type="text" placeholder="Formatage souhaité" />
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="btn" id="addRuleBtn">Ajouter</button>
+        <button class="btn danger" id="resetDefaultsBtn" title="Restore built-in defaults">Réinitialiser</button>
+      </div>
+
+      <h3 style="margin:16px 0 8px">Règles actuelles</h3>
+      <ul id="rulesList" class="rules"></ul>
+
+      <div class="toolbar">
+        <button class="btn secondary" id="exportBtn">Exportation (JSON)</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none" />
+        <button class="btn secondary" id="importBtn">Importion</button>
+      </div>
+    <!-- <p class="small muted">Les règles sont stockées dans votre navigateur (localStorage) sur ce site. Elles sont synchronisées par navigateur/appareil.</p> -->
+     <p style="text-align: center; font-size: 14px; color: gray; margin-top: 20px;">
+  © 2025 Nettoyeur de texte | Crée avec le ❤️ | <a target="_blank">Mouhamed Koko</a>
+</p>
+
+    </div>
+  </div>
 
   <script>
-    let rules = JSON.parse(localStorage.getItem("textCleanerRules")) || {};
+    /************ Utilities ************/
+    const LS_KEY = 'textCleanerRules.v1';
 
-    // Display rules
-    function displayRules() {
-      const rulesList = document.getElementById("rulesList");
-      rulesList.innerHTML = "";
-      for (const [key, value] of Object.entries(rules)) {
-        const li = document.createElement("li");
-        li.textContent = `${key} ➝ ${value}`;
-        rulesList.appendChild(li);
+    // Normalize strings for matching: lowercase, remove accents, remove punctuation to spaces, collapse spaces
+    const normalize = (s) => s
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')        // strip accents
+      .replace(/[^a-z0-9]+/g, ' ')            // non-alnum -> space
+      .replace(/\s+/g, ' ')                   // collapse spaces
+      .trim();
+
+    // Tokenize a cleaned string into words (already lowercase and punctuation-trimmed)
+    const tokenize = (s) => s.length ? s.split(' ') : [];
+
+    // Build display for a rule item
+    function ruleItem(key, value) {
+      const li = document.createElement('li');
+      li.className = 'rule';
+      const txt = document.createElement('div');
+      txt.innerHTML = `<b>${key}</b> &nbsp;→&nbsp; ${value}`;
+      const del = document.createElement('button');
+      del.className = 'btn danger';
+      del.textContent = 'Supprimer';
+      del.onclick = () => { delete rules[key]; saveRules(); renderRules(); };
+      li.appendChild(txt); li.appendChild(del);
+      return li;
+    }
+
+    /************ Default Rules (seed) ************/
+    const defaultRules = {
+      "tiktok": "Tiktok",
+      "facebook": "Facebook",
+      "whatsapp": "Whatsapp",
+      "onexbet": "OneXbet",
+      "one": "One",
+      "ella": "Ella",
+      "xbet": "Xbet",
+      "jesus": "Jesus",
+      "dieu": "Dieu",
+      "siri": "Siri",
+      "real": "Real",
+      "barça": "Barça",
+      "madrid": "Madrid",
+      "league": "League",
+      "champion": "Champion",
+      "coupe": "Coupe",
+      "monde": "Monde",
+      "ballon": "Ballon",
+      "moov": "Moov",
+      "mtn": "MTN",
+      "orange": "Orange",
+      "h": "heures",
+      "m": "mètres carrés",
+      "cyrille": "Cyrille",
+      "mme": "madame",
+      "Mme": "madame",
+      "youtube": "Youtube",
+      "himra": "Himra",
+      "google": "Google",
+      "min": "minutes",
+      "Min": "minutes",
+      "tecno": "Tecno",
+      "spark": "Spark",
+      "pro": "Pro",
+      "infinix": "Infinix",
+      "iphone": "iPhone",
+      "telegram": "Telegram",
+      "bluetooth": "Bluetooth",
+      "fally": "Fally",
+      "ipupa": "Ipupa",
+      "cote d ivoire": "Côte d'Ivoire"  // accent-insensitive match; outputs with apostrophe and accents
+    };
+
+    /************ State (rules) ************/
+    let rules = loadRules();
+
+    function loadRules() {
+      try {
+        const raw = localStorage.getItem(LS_KEY);
+        if (raw) {
+          const obj = JSON.parse(raw);
+          if (obj && typeof obj === 'object') return obj;
+        }
+      } catch {}
+      // Seed with defaults if nothing saved
+      localStorage.setItem(LS_KEY, JSON.stringify(defaultRules));
+      return { ...defaultRules };
+    }
+
+    function saveRules() {
+      localStorage.setItem(LS_KEY, JSON.stringify(rules));
+    }
+
+    function resetDefaults() {
+      if (!confirm('Reset rules to built-in defaults? This will erase your custom rules.')) return;
+      rules = { ...defaultRules };
+      saveRules();
+      renderRules();
+    }
+
+    /************ Cleaning Pipeline ************/
+    function cleanPipeline(input) {
+      // 1) Remove dots/commas/colons/semicolons (treat as separators)
+      let t = input.replace(/\s*\.\s*/g, ' ');
+      t = t.replace(/[,:;]+/g, ' ');
+      // 2) Collapse spaces
+      t = t.replace(/\s+/g, ' ').trim();
+      // 3) Lowercase
+      t = t.toLowerCase();
+
+      // 4) Apply phrase-aware replacements using normalized rules
+      // Build a map of normalizedKey -> replacement, and track max phrase length (tokens)
+      const normMap = {};
+      let maxLen = 1;
+      Object.entries(rules).forEach(([k, v]) => {
+        const nk = normalize(k);        // e.g., "cote d'ivoire" -> "cote d ivoire"
+        if (!nk) return;
+        normMap[nk] = v;
+        const l = tokenize(nk).length;
+        if (l > maxLen) maxLen = l;
+      });
+
+      const tokens = tokenize(t);      // tokens from cleaned text
+      const out = [];
+      for (let i = 0; i < tokens.length;) {
+        let matched = false;
+        // Try longest phrases first
+        for (let span = Math.min(maxLen, tokens.length - i); span >= 1; span--) {
+          const slice = tokens.slice(i, i + span).join(' ');
+          const nslice = normalize(slice); // should be same as slice now, but safe
+          if (normMap[nslice]) {
+            out.push(normMap[nslice]);
+            i += span;
+            matched = true;
+            break;
+          }
+        }
+        if (!matched) {
+          out.push(tokens[i]);
+          i += 1;
+        }
       }
+
+      return out.join(' ');
     }
 
-    function cleanText() {
-      let text = document.getElementById("inputText").value;
-
-      // Remove extra spaces and line breaks
-      text = text.replace(/\s+/g, " ").trim();
-
-      // Apply rules
-      for (const [key, value] of Object.entries(rules)) {
-        const regex = new RegExp(key, "gi"); 
-        text = text.replace(regex, value);
-      }
-
-      document.getElementById("outputText").value = text;
+    /************ UI Handlers ************/
+    function renderRules() {
+      const list = document.getElementById('rulesList');
+      list.innerHTML = '';
+      // Sort alphabetically for readability
+      const items = Object.entries(rules).sort((a,b)=>a[0].localeCompare(b[0]));
+      items.forEach(([k,v]) => list.appendChild(ruleItem(k, v)));
     }
 
-    function copyText() {
-      const output = document.getElementById("outputText");
-      output.select();
-      document.execCommand("copy");
-      alert("✅ Text copied!");
+    function addOrUpdateRule() {
+      const find = document.getElementById('findInput').value.trim();
+      const replace = document.getElementById('replaceInput').value.trim();
+      if (!find || !replace) { alert('Please fill both fields.'); return; }
+      const key = normalize(find);          // store normalized key
+      rules[key] = replace;                 // save desired formatting as-is
+      saveRules(); renderRules();
+      document.getElementById('findInput').value = '';
+      document.getElementById('replaceInput').value = '';
     }
 
-    function addRule() {
-      const original = document.getElementById("originalWord").value.trim();
-      const correct = document.getElementById("correctWord").value.trim();
-
-      if (original && correct) {
-        rules[original] = correct;
-
-        // Save in localStorage
-        localStorage.setItem("textCleanerRules", JSON.stringify(rules));
-
-        displayRules();
-        document.getElementById("originalWord").value = "";
-        document.getElementById("correctWord").value = "";
-      }
+    function cleanAction() {
+      const raw = document.getElementById('inputText').value;
+      const result = cleanPipeline(raw);
+      document.getElementById('outputText').value = result;
     }
 
-    // Initialize on load
-    window.onload = displayRules;
+    function clearAction() {
+      document.getElementById('inputText').value = '';
+      document.getElementById('outputText').value = '';
+    }
+
+    async function copyAction() {
+      const s = document.getElementById('outputText').value;
+      if (!s) return;
+      try { await navigator.clipboard.writeText(s); alert('Result copied to clipboard!'); }
+      catch { /* fallback */ const ta = document.getElementById('outputText'); ta.select(); document.execCommand('copy'); alert('Copied!'); }
+    }
+
+    function exportRules() {
+      const blob = new Blob([JSON.stringify(rules, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'text-cleaner-rules.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function importRules(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const obj = JSON.parse(reader.result);
+          if (!obj || typeof obj !== 'object') throw new Error('Invalid JSON');
+          // Normalize keys on import to be safe
+          const normalized = {};
+          for (const [k,v] of Object.entries(obj)) {
+            normalized[normalize(k)] = String(v);
+          }
+          rules = normalized;
+          saveRules(); renderRules();
+          alert('Rules imported successfully.');
+        } catch (e) {
+          alert('Failed to import rules: ' + e.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    /************ Wire up events ************/
+    document.getElementById('cleanBtn').onclick = cleanAction;
+    document.getElementById('clearBtn').onclick = clearAction;
+    document.getElementById('copyBtn').onclick = copyAction;
+    document.getElementById('addRuleBtn').onclick = addOrUpdateRule;
+    document.getElementById('resetDefaultsBtn').onclick = resetDefaults;
+    document.getElementById('exportBtn').onclick = exportRules;
+    document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
+    document.getElementById('importFile').addEventListener('change', (e)=>{
+      if (e.target.files && e.target.files[0]) importRules(e.target.files[0]);
+      e.target.value = '';
+    });
+
+    // Initial render
+    renderRules();
   </script>
-
 </body>
 </html>
